@@ -2,7 +2,7 @@ import asyncio
 import websockets
 from .redis_pool import subscribe
 from .logger import logging
-from .message import BaseMessage
+from .message import BaseMessage, ServerMessage
 
 class Route:
     Routes = {}
@@ -69,18 +69,24 @@ class Listener:
         try:
             async for message in self.ws:
                 base_message = BaseMessage(message)
-                base_message.user = self.username
-                self.log.debug(message)
+                self.log.debug(base_message.data['from'])
+                if base_message.data['from'] != '' or base_message.message_type == 'AuthMessage':
+                    if base_message.message_type in Route.Routes.keys():
+                        self.log.debug(base_message.message_type)
+                        result = await Route.Routes[base_message.message_type](base_message.to_json(), self.ws)
+                        self.log.debug(result)
+                        if result:
+                            if result['status'] == 'Logged':
+                                self.username = result['channel']
+                                self.server.sender.addChannel(self.username)
+                            else:
+                                self.log.debug('Login failed')
+                                self.ws.close()
+                                self.server.sender.close()
+                else:
+                    message = ServerMessage({'from': 'Server', 'content': '请先登录服务器。'.format(message.to)})
+                    await self.ws.send(message.to_json())
 
-                if base_message.message_type in Route.Routes.keys():
-                    self.log.debug(base_message.message_type)
-                    result = await Route.Routes[base_message.message_type](base_message.to_json(), self.ws)
-
-                    if result:
-                        for key in result.keys():
-                            if key == 'addChannel':
-                                self.username = result[key]
-                                self.server.sender.addChannel(result[key])
 
         except websockets.ConnectionClosed or ConnectionResetError:
             self.log.debug('Connection closed.')

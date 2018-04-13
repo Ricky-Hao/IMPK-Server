@@ -2,6 +2,7 @@ import asyncio
 import websockets
 from .server import Server
 from .blueprint import *
+from .database import db
 
 def start():
     loop = asyncio.get_event_loop()
