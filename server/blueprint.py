@@ -19,6 +19,11 @@ async def login(message, ws):
         await ws.send(AuthMessage({'status':'Failed'}).to_json())
         return {'status':'Failed'}
 
+@Route.route('CertificateRequestMessage')
+async def certificateRequest(message, ws):
+    #Todo
+    pass
+
 @Route.route('ChatMessage')
 async def chat(message, ws):
     log = logging.getLogger('Chat')
