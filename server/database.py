@@ -22,11 +22,19 @@ class Database:
                           USERNAME TEXT NOT NULL ,
                           PASSWORD TEXT NOT NULL ,
                           TIMESTAMP TimeStamp NOT NULL DEFAULT (datetime('now','localtime')))''')
+
             cur.execute('''
                       CREATE TABLE friends
                       (ID INTEGER PRIMARY KEY AUTOINCREMENT ,
                       USERNAME TEXT NOT NULL ,
                       FRIEND TEXT NOT NULL)''')
+
+            cur.execute('''
+                      CREATE TABLE cert
+                      (ID INTEGER PRIMARY KEY AUTOINCREMENT ,
+                      USERNAME TEXT NOT NULL ,
+                      CERT TEXT NOT NULL)''')
+
             conn.commit()
             conn.close()
 
@@ -85,6 +93,15 @@ class Database:
             self.insertOne('user', 'USERNAME, PASSWORD', [username, password])
             return True
         return False
+
+    def addCert(self, username, cert_data):
+        if self.fetchOne('*', 'cert', self.and_where({'username':username})) is None:
+            self.insertOne('cert', 'USERNAME, CERT', [username, cert_data])
+            return True
+        return False
+
+    def fetchCert(self, username):
+        return self.fetchOne('cert', 'cert', self.and_where({'username':username}))
 
     def checkUser(self, username, password):
         result = self.fetchOne('*', 'user', self.and_where({'username':username}))
