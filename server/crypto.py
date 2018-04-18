@@ -56,20 +56,21 @@ def signCSR(ca, ca_key, csr, timedelta, path):
 
     return cert
 
-def loadPrivate(path, password=None):
-    with open(path, 'rb') as f:
-        key_data = f.read()
+def loadPrivate(key_data, password=None):
+    if not isinstance(key_data, bytes):
+        key_data = key_data.encode()
 
     if password is not None:
         password = password.encode()
 
     return serialization.load_pem_private_key(key_data, password, default_backend())
 
-def loadCert(path):
-    with open(path, 'rb') as f:
-        cert_data = f.read()
+def loadCert(cert_data):
+    if not isinstance(cert_data, bytes):
+        cert_data = cert_data.encode()
 
     return x509.load_pem_x509_certificate(cert_data, default_backend())
+
 
 def signWithPrivate(message, private_key):
     if not isinstance(message, bytes):
