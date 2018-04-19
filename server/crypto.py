@@ -71,7 +71,6 @@ def loadCert(cert_data):
 
     return x509.load_pem_x509_certificate(cert_data, default_backend())
 
-
 def signWithPrivate(message, private_key):
     if not isinstance(message, bytes):
         message = message.encode()
@@ -151,3 +150,4 @@ def decryptAndVerify(ciphertext, signature, public_key, private_key):
         return plaintext
     else:
         return ''
+

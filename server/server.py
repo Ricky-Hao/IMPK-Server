@@ -69,11 +69,11 @@ class Listener:
         try:
             async for message in self.ws:
                 base_message = BaseMessage(message)
-                self.log.debug(base_message.data['from'])
-                if base_message.data['from'] != '' or base_message.message_type == 'AuthMessage':
-                    if base_message.message_type in Route.Routes.keys():
-                        self.log.debug(base_message.message_type)
-                        result = await Route.Routes[base_message.message_type](base_message.to_json(), self.ws)
+                self.log.debug(base_message.source)
+                if base_message.source != '' or base_message.type == 'AuthMessage':
+                    if base_message.type in Route.Routes.keys():
+                        self.log.debug(base_message.type)
+                        result = await Route.Routes[base_message.type](base_message.to_json(), self.ws)
                         self.log.debug(result)
                         if result:
                             if result['status'] == 'Logged':
@@ -84,7 +84,7 @@ class Listener:
                                 self.ws.close()
                                 self.server.sender.close()
                 else:
-                    message = ServerMessage({'from': 'Server', 'content': '请先登录服务器。'.format(message.to)})
+                    message = ServerMessage({'content': '请先登录服务器。'})
                     await self.ws.send(message.to_json())
 
 
