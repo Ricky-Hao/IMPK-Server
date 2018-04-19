@@ -70,7 +70,7 @@ class Listener:
             async for message in self.ws:
                 base_message = BaseMessage(message)
                 self.log.debug(base_message.source)
-                if base_message.source != '' or base_message.type == 'AuthMessage':
+                if base_message.source != '' or base_message.type == 'AuthRequestMessage':
                     if base_message.type in Route.Routes.keys():
                         self.log.debug(base_message.type)
                         result = await Route.Routes[base_message.type](base_message.to_json(), self.ws)
