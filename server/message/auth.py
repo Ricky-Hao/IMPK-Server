@@ -29,6 +29,7 @@ class AuthResultMessage(BaseMessage):
     def _parse_dict(self, data):
         super()._parse_dict(data)
         self.status = data.get('status')
+        self.source = 'Server'
         if self.status == 'Logged':
             self.username = data.get('username')
         else:

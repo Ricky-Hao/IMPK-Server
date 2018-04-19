@@ -66,8 +66,8 @@ async def acceptFriend(message, ws):
     if message.accept:
         db.addFriend(message.friend_name, message.source)
         db.addFriend(message.source, message.friend_name)
-        await updateFriend(FriendUpdateMessage({'from':message.friend_name}).to_json(), ws)
-        await updateFriend(FriendUpdateMessage({'from': message.source}).to_json(), ws)
+        await updateFriend(FriendUpdateMessage({'source':message.friend_name}).to_json(), ws)
+        await updateFriend(FriendUpdateMessage({'source': message.source}).to_json(), ws)
     else:
         server_message = ServerMessage({'content': '{0}拒绝成为您的好友。'.format(message.source)})
         send(message.friend_name, server_message.to_json())

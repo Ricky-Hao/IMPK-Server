@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+import json
 from .redis_pool import subscribe
 from .logger import logging
 from .message import BaseMessage, ServerMessage
@@ -36,7 +37,10 @@ class Sender:
                 if message:
                     self.log.debug(message)
                     if message['type'] == 'message':
-                        await self.ws.send(message['data'].decode())
+                        data = json.loads(message['data'].decode())
+                        if data.get('source') is None:
+                            data['source'] = 'Server'
+                        await self.ws.send(json.dumps(data))
                 else:
                     await asyncio.sleep(1)
         except websockets.ConnectionClosed or ConnectionResetError:
@@ -73,7 +77,7 @@ class Listener:
                 if base_message.source != '' or base_message.type == 'AuthRequestMessage':
                     if base_message.type in Route.Routes.keys():
                         self.log.debug(base_message.type)
-                        result = await Route.Routes[base_message.type](base_message.to_json(), self.ws)
+                        result = await Route.Routes[base_message.type](message, self.ws)
                         self.log.debug(result)
                         if result:
                             if result['status'] == 'Logged':

@@ -13,6 +13,7 @@ class ChatMessage(BaseMessage):
         super()._parse_dict(data)
         self.to_user = data.get('to_user')
         self.content = data.get('content')
+        self.source = data.get('source')
 
     def to_dict(self):
         data = super().to_dict()
