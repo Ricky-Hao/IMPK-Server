@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 from .server import Server
-from .blueprint import *
+from .route import *
 from .database import db
 
 def start():

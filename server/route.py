@@ -2,13 +2,15 @@ import asyncio
 import json
 from .server import Route, Sender
 from .message import *
-from .logger import logging
+from .logger import logger
 from .redis_pool import send
 from .database import db
 
+route_log = logger.getChild('Route')
+
 @Route.route('AuthRequestMessage')
 async def login(message, ws):
-    log = logging.getLogger('Login')
+    log = route_log.getChild('Login')
     message = AuthRequestMessage(message)
     log.debug(message)
     if db.checkUser(message.username, message.password):
@@ -26,7 +28,7 @@ async def certificateRequest(message, ws):
 
 @Route.route('ChatMessage')
 async def chat(message, ws):
-    log = logging.getLogger('Chat')
+    log = route_log.getChild('Chat')
     message = ChatMessage(message)
     log.debug(message)
     if send(message.to_user, message.to_json()) < 1:
@@ -37,7 +39,7 @@ async def chat(message, ws):
 
 @Route.route('FriendUpdateMessage')
 async def updateFriend(message, ws):
-    log = logging.getLogger('FriendUpdate')
+    log = route_log.getChild('FriendUpdate')
     message = FriendUpdateMessage(message)
     temp_list = db.fetchFriend(message.source)
     friend_list = []
@@ -49,7 +51,7 @@ async def updateFriend(message, ws):
 
 @Route.route('FriendRequestMessage')
 async def requestFriend(message, ws):
-    log = logging.getLogger('FriendRequest')
+    log = route_log.getChild('FriendRequest')
     message = FriendRequestMessage(message)
     log.debug(message)
     if send(message.friend_name, message.to_json()) < 1:
@@ -60,7 +62,7 @@ async def requestFriend(message, ws):
 
 @Route.route('FriendAcceptMessage')
 async def acceptFriend(message, ws):
-    log = logging.getLogger('FriendAccept')
+    log = route_log.getChild('FriendAccept')
     message = FriendAcceptMessage(message)
     log.debug(message)
     if message.accept:

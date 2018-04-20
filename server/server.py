@@ -2,7 +2,7 @@ import asyncio
 import websockets
 import json
 from .redis_pool import subscribe
-from .logger import logging
+from .logger import logger
 from .message import BaseMessage, ServerMessage
 
 class Route:
@@ -26,7 +26,7 @@ class Sender:
         self.server = server
         self.ps = subscribe('BoardCast')
         self.exit = 0
-        self.log = logging.getLogger('Sender{0}'.format(self.ws.remote_address))
+        self.log = logger.getChild('Sender{0}'.format(self.ws.remote_address))
 
     async def sender(self):
         try:
@@ -67,7 +67,7 @@ class Listener:
         self.path = path
         self.server = server
         self.username = ''
-        self.log = logging.getLogger('Listener{0}{1}'.format(self.username, self.ws.remote_address))
+        self.log = logger.getChild('Listener{0}{1}'.format(self.username, self.ws.remote_address))
 
     async def listener(self):
         try:
@@ -104,7 +104,7 @@ class Server:
         self.listener = None
         self.websocket = None
         self.path = None
-        self.log = logging.getLogger('Server')
+        self.log = logger.getChild('Server')
 
     async def connect(self, websocket, path):
         self.websocket = websocket

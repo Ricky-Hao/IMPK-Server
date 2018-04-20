@@ -1,7 +1,7 @@
 import redis
-from .logger import logging
+from .logger import logger
 
-log = logging.getLogger('Redis')
+log = logger.getChild('Redis')
 
 redis_pool = redis.ConnectionPool(host='rickyhao.com', port=6379)
 

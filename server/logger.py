@@ -7,4 +7,4 @@ logging.basicConfig(
     stream=stderr
 )
 
-log = logging.getLogger('main')
+logger = logging.getLogger('Server')
