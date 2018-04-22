@@ -1,3 +1,4 @@
+import os
 import datetime
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -5,15 +6,37 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography import x509, exceptions
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
+from Server.util import KEY_ROOT
 
-def generatePrivate(path, password):
+
+def getUserPath(username):
+    path = os.path.join(KEY_ROOT, username)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+def checkUserPrivateKey(username):
+    key_path = os.path.join(getUserPath(username), '{0}.key'.format(username))
+    if os.path.exists(key_path):
+        return True
+    return False
+
+def checkUserCertKey(username):
+    cert_path = os.path.join(getUserPath(username), '{0}.crt'.format(username))
+    if os.path.exists(cert_path):
+        return True
+    return False
+
+def generatePrivate(username, password):
     key = rsa.generate_private_key(
         public_exponent = 65537,
         key_size = 2048,
         backend = default_backend()
     )
 
-    with open(path, 'wb') as f:
+    key_path = os.path.join(getUserPath(username), '{0}.key'.format(username))
+
+    with open(key_path, 'wb') as f:
         f.write(key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
@@ -22,7 +45,7 @@ def generatePrivate(path, password):
 
     return key
 
-def generateCSR(path, key, country_name, state_name, locality_name, organization_name, unit_name, common_name):
+def generateCSR(username, key, country_name, state_name, locality_name, organization_name, unit_name, common_name):
     csr = x509.CertificateSigningRequestBuilder()
     csr = csr.subject_name(
         x509.Name([
@@ -36,12 +59,14 @@ def generateCSR(path, key, country_name, state_name, locality_name, organization
     )
     csr = csr.sign(key, hashes.SHA256(), default_backend())
 
+    path = os.path.join(getUserPath(username), '{0}.csr'.format(username))
+
     with open(path, 'wb') as f:
         f.write(csr.public_bytes(serialization.Encoding.PEM))
 
-    return csr
+    return csr.public_bytes(serialization.Encoding.PEM)
 
-def signCSR(ca, ca_key, csr, timedelta, path):
+def signCSR(ca, ca_key, csr, timedelta):
     cert = x509.CertificateBuilder()
     cert = cert.subject_name(csr.subject)
     cert = cert.issuer_name(ca.issuer)
@@ -51,12 +76,9 @@ def signCSR(ca, ca_key, csr, timedelta, path):
     cert = cert.not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=timedelta))
     cert = cert.sign(ca_key, hashes.SHA256(), default_backend())
 
-    with open(path, 'wb') as f:
-        f.write(cert.public_bytes(serialization.Encoding.PEM))
+    return cert.public_bytes(serialization.Encoding.PEM).decode()
 
-    return cert
-
-def loadPrivate(key_data, password=None):
+def loadPrivate(key_data, password):
     if not isinstance(key_data, bytes):
         key_data = key_data.encode()
 
@@ -65,11 +87,51 @@ def loadPrivate(key_data, password=None):
 
     return serialization.load_pem_private_key(key_data, password, default_backend())
 
+def loadPrivateFromFile(key_path, password):
+    with open(key_path, 'rb') as f:
+        key_data = f.read()
+
+    return loadPrivate(key_data, password)
+
+def loadPrivateFromUser(username, password):
+    key_path = os.path.join(getUserPath(username), '{0}.key'.format(username))
+    with open(key_path, 'rb') as f:
+        key_data = f.read()
+
+    return loadPrivate(key_data, password)
+
 def loadCert(cert_data):
     if not isinstance(cert_data, bytes):
         cert_data = cert_data.encode()
 
     return x509.load_pem_x509_certificate(cert_data, default_backend())
+
+def loadCSR(csr_data):
+    if not isinstance(csr_data, bytes):
+        csr_data = csr_data.encode()
+
+    return x509.load_pem_x509_csr(csr_data, default_backend())
+
+def loadCertFromFile(cert_path):
+    with open(cert_path, 'rb') as f:
+        cert_data = f.read()
+
+    return loadCert(cert_data)
+
+def loadCertFromUser(username):
+    cert_path = os.path.join(getUserPath(username), '{0}.crt'.format(username))
+    with open(cert_path, 'rb') as f:
+        cert_data = f.read()
+
+    return loadCert(cert_data)
+
+def installCertForUser(username, cert_data):
+    cert_path = os.path.join(getUserPath(username), '{0}.crt'.format(username))
+
+    with open(cert_path, 'wb') as f:
+        f.write(cert_data)
+
+    return loadCert(cert_data)
 
 def signWithPrivate(message, private_key):
     if not isinstance(message, bytes):

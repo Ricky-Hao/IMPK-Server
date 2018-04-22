@@ -1,15 +1,12 @@
 import sqlite3
 import os
 from hashlib import md5
-from .logger import logger
-
-path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+from Server.util import logger, DB_ROOT
 
 class Database:
     def __init__(self):
-        self.db_name = 'server.db'
-        self.db_path = os.path.join(path, self.db_name)
+        self.db_name = 'Server.db'
+        self.db_path = os.path.join(DB_ROOT, self.db_name)
         self.log = logger.getChild('Database')
         self.databaseInitial()
 
@@ -91,7 +88,6 @@ class Database:
         return result
 
     def addUser(self, username, password):
-        password = md5(password.encode()).hexdigest()
         if self.fetchOne('*', 'user', self.and_where({'username':username})) is None:
             self.insertOne('user', 'USERNAME, PASSWORD', [username, password])
             return True
@@ -104,7 +100,7 @@ class Database:
         return False
 
     def fetchCert(self, username):
-        return self.fetchOne('cert', 'cert', self.and_where({'username':username}))
+        return self.fetchOne('cert', 'cert', self.and_where({'username':username}))[0]
 
     def checkUser(self, username, password):
         result = self.fetchOne('*', 'user', self.and_where({'username':username}))
@@ -128,4 +124,3 @@ class Database:
         return self.deleteOne('friends', self.and_where({'username':username, 'friend':friend}))
 
 
-db = Database()

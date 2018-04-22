@@ -1,5 +1,5 @@
 import redis
-from .logger import logger
+from Server.util import logger
 
 log = logger.getChild('Redis')
 

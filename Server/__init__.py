@@ -1,8 +1,6 @@
 import asyncio
 import websockets
-from .server import Server
-from .route import *
-from .database import db
+from Server.core import Server
 
 def start():
     loop = asyncio.get_event_loop()

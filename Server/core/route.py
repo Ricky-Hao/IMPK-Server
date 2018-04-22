@@ -1,10 +1,9 @@
 import asyncio
 import json
-from .server import Route, Sender
-from .message import *
-from .logger import logger
-from .redis_pool import send
-from .database import db
+from Server.core import Route, send, crypto
+from Server.message import *
+from Server.util import logger
+from Server.database import db
 
 route_log = logger.getChild('Route')
 
@@ -21,10 +20,46 @@ async def login(message, ws):
         await ws.send(AuthResultMessage({'status':'Failed'}).to_json())
         return {'status':'Failed'}
 
+@Route.route('RegisterRequestMessage')
+async def register(message, ws):
+    log = route_log.getChild('Register')
+    message = RegisterRequestMessage(message)
+    log.debug(message)
+    if db.fetchOne('*', 'user', db.and_where({'username':message.username})) is None:
+        if db.addUser(message.username, message.password):
+            await ws.send(AuthResultMessage({'status':'Logged', 'username':message.username}).to_json())
+            return {'status':'Logged', 'channel':message.username}
+
+    await ws.send(AuthResultMessage({'status':'Failed'}).to_json())
+    return {'status':'Failed'}
+
 @Route.route('CertificateRequestMessage')
 async def certificateRequest(message, ws):
-    # Todo
-    pass
+    message = CertificateRequestMessage(message)
+    cert_data = db.fetchCert(message.request_user)
+    if cert_data is None:
+        await ws.send(ServerMessage({'content':'{0}的证书文件不存在。'.format(message.request_user)}).to_json())
+    else:
+        cert_message = CertificateInstallMessage()
+        cert_message.cert = cert_data
+        cert_message.cert_user = message.request_user
+        await ws.send(cert_message.to_json())
+
+@Route.route('CertificateSigningRequestMessage')
+async def certficateSigning(message, ws):
+    log = route_log.getChild('CertificateSigning')
+
+    server_key = crypto.loadPrivateFromUser('Server', None)
+    server_cert = crypto.loadCertFromUser('Server')
+    message = CertificateSigningRequestMessage(message)
+    cert = crypto.signCSR(server_cert, server_key, crypto.loadCSR(message.csr), 90)
+    log.debug('Sign CSR for {0}.'.format(message.source))
+    install_message = CertificateInstallMessage({'cert':cert, 'cert_user':message.source})
+
+    db.addCert(install_message.cert_user, install_message.cert)
+    await ws.send(install_message.to_json())
+
+
 
 @Route.route('ChatMessage')
 async def chat(message, ws):
@@ -47,6 +82,12 @@ async def updateFriend(message, ws):
         friend_list.append(row[0])
     log.debug(friend_list)
     send(message.source, FriendMessage({'friend_list':friend_list}).to_json())
+
+    for friend in friend_list:
+        friend_cert = db.fetchCert(friend)
+        install_message = CertificateInstallMessage({'cert_user':friend, 'cert':friend_cert})
+        send(message.source, install_message.to_json())
+
 
 
 @Route.route('FriendRequestMessage')

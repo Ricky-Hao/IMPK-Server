@@ -41,3 +41,22 @@ class AuthResultMessage(BaseMessage):
         data['username'] = self.username
         return data
 
+
+class RegisterRequestMessage(BaseMessage):
+    def __init__(self, data=None):
+        super().__init__(data)
+
+    def _init_type(self):
+        self.type = 'RegisterRequestMessage'
+
+    def _parse_dict(self, data):
+        super()._parse_dict(data)
+        self.username = data.get('username')
+        self.password = data.get('password')
+
+    def to_dict(self):
+        data = super().to_dict()
+        data['username'] = self.username
+        data['password'] = self.password
+        return data
+

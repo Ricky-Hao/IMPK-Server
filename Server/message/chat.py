@@ -12,11 +12,12 @@ class ChatMessage(BaseMessage):
     def _parse_dict(self, data):
         super()._parse_dict(data)
         self.to_user = data.get('to_user')
-        self.content = data.get('content')
-        self.source = data.get('source')
+        self.ciphertext = data.get('ciphertext')
+        self.signature = data.get('signature')
 
     def to_dict(self):
         data = super().to_dict()
         data['to_user'] = self.to_user
-        data['content'] = self.content
+        data['ciphertext'] = self.ciphertext
+        data['signature'] = self.signature
         return data

@@ -1,9 +1,9 @@
 import asyncio
 import websockets
 import json
-from .redis_pool import subscribe
-from .logger import logger
-from .message import BaseMessage, ServerMessage
+from Server.core.redis_pool import subscribe
+from Server.util import logger
+from Server.message import BaseMessage, ServerMessage
 
 class Route:
     Routes = {}
@@ -74,7 +74,7 @@ class Listener:
             async for message in self.ws:
                 base_message = BaseMessage(message)
                 self.log.debug(base_message.source)
-                if base_message.source != '' or base_message.type == 'AuthRequestMessage':
+                if base_message.source != '' or base_message.type in ['AuthRequestMessage', 'RegisterRequestMessage']:
                     if base_message.type in Route.Routes.keys():
                         self.log.debug(base_message.type)
                         result = await Route.Routes[base_message.type](message, self.ws)
@@ -92,8 +92,9 @@ class Listener:
                     await self.ws.send(message.to_json())
 
 
-        except websockets.ConnectionClosed or ConnectionResetError:
+        except Exception as err:
             self.log.debug('Connection closed.')
+            self.log.debug(err)
             self.ws.close()
             self.server.sender.close()
 
