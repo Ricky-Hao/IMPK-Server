@@ -1,9 +1,14 @@
+import os
 import redis
 from Server.util import logger
 
 log = logger.getChild('Redis')
 
-redis_pool = redis.ConnectionPool(host='rickyhao.com', port=6379)
+REDIS_HOST = os.environ.get('REDIS_HOST')
+if not REDIS_HOST:
+    REDIS_HOST = 'rickyhao.com'
+
+redis_pool = redis.ConnectionPool(host=REDIS_HOST, port=6379)
 
 def subscribe(channel):
     redis_connection = redis.StrictRedis(connection_pool=redis_pool)

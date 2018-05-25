@@ -1,0 +1,15 @@
+version: "3.6"
+services:
+  redis:
+    image: redis:latest
+
+  server:
+    build: .
+    depends_on:
+      - redis
+    ports:
+      - "30000:30000"
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - ../../IMPK-Server:/server
