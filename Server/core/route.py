@@ -57,7 +57,12 @@ async def certficateSigning(message, ws):
     install_message = CertificateInstallMessage({'cert':cert, 'cert_user':message.source})
 
     db.addCert(install_message.cert_user, install_message.cert)
-    await ws.send(install_message.to_json())
+    send(message.source, install_message.to_json())
+
+    friend_list = db.fetchFriend(message.source)
+    log.debug('Send new cert to friends: {0}'.format(friend_list))
+    for friend in friend_list:
+        send(friend[0], install_message.to_json())
 
 
 

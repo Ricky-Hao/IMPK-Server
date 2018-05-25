@@ -87,6 +87,18 @@ class Database:
         conn.close()
         return result
 
+    def updateOne(self, table, key, value_list, where):
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        sql = 'update {0} set {1} = ? where {2}'.format(table, key, where)
+        self.log.debug('SQL: {0}, Value list: {1}'.format(sql, value_list))
+
+        result = cur.execute(sql, value_list)
+        cur.close()
+        conn.commit()
+        conn.close()
+        return result
+
     def addUser(self, username, password):
         if self.fetchOne('*', 'user', self.and_where({'username':username})) is None:
             self.insertOne('user', 'USERNAME, PASSWORD', [username, password])
@@ -97,7 +109,9 @@ class Database:
         if self.fetchOne('*', 'cert', self.and_where({'username':username})) is None:
             self.insertOne('cert', 'USERNAME, CERT', [username, cert_data])
             return True
-        return False
+        else:
+            self.updateOne('cert', 'CERT', [cert_data], self.and_where({'USERNAME':username}))
+            return True
 
     def fetchCert(self, username):
         return self.fetchOne('cert', 'cert', self.and_where({'username':username}))[0]
