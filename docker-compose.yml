@@ -12,4 +12,4 @@ services:
     environment:
       REDIS_HOST: redis
     volumes:
-      - ../../IMPK-Server:/server
+      - .:/server
