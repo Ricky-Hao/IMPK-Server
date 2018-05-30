@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:alpine
 LABEL maintainer="Ricky Hao <a959695@live.com>"
 
 VOLUME /server
